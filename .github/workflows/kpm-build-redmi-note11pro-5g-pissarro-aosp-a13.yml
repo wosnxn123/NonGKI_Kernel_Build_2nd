@@ -60,11 +60,11 @@ env:
   PATCHES_BRANCH: "mi_kernel" # [your_branch] -> main
 
   SUSFS_FOLDER_FIXED: "redmi_note11pro_5g_pissarro_aosp_a13" # Fill in your patch prefix directory here. Leave it blank if there isn't one. -> your_folder
-  SUSFS_PATCH_FIXED: "susfs_414_fix,0001-add-snowflake-schedutil-governor-pissarro-v2,0002-hydrogen-performance-pack-after-pissarrox,0003-fix-sukisu-ultra-kpm-access-ok-4.14,0004-fix-sukisu-ultra-static-key-link-v2-4.14" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
+  SUSFS_PATCH_FIXED: "susfs_414_fix,0001-add-snowflake-schedutil-governor-pissarro-v2,0002-hydrogen-performance-pack-after-pissarrox,0003-fix-sukisu-ultra-kpm-access-ok-4.14,0004-fix-sukisu-ultra-static-key-link-v2-4.14,0005-fix-sukisu-ultra-seccomp-reboot-supercall-4.14" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
 
   REKERNEL_ENABLE: "false" # if u need Re:Kernel.
 
-  HOOK_METHOD: "manual" # Manual hook method -> syscall.
+  HOOK_METHOD: "syscall" # Manual hook method -> syscall.
 
   KERNEL_PATCH: "false" # If your kernel version is <= 4.9, you have the option of enabling the patch to patch the kernel_write and kernel_read functions.
 
