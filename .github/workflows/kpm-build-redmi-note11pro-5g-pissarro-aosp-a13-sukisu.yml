@@ -1,4 +1,4 @@
-name: Build Redmi Note 11 Pro 5G (Pissarro) (A13) (kpm)
+name: Build Redmi Note 11 Pro 5G (Pissarro) (A13) (kpm) (sukisu)
 
 on:
   workflow_call:
@@ -33,7 +33,7 @@ env:
   KERNELSU_BRANCH : ""
 
   KERNELSU_AUTO_GET : "true" # if u want easy setting kernelsu, u can true.
-  KERNELSU_AUTO_FORK : "resukisu" # magic, rsuntk, next, resukisu and sukisu
+  KERNELSU_AUTO_FORK : "sukisu" # magic, rsuntk, next, resukisu and sukisu
 
   SUSFS_ENABLE : true
   SUSFS_FIXED : true
@@ -60,7 +60,7 @@ env:
   PATCHES_BRANCH: "mi_kernel" # [your_branch] -> main
 
   SUSFS_FOLDER_FIXED: "redmi_note11pro_5g_pissarro_aosp_a13" # Fill in your patch prefix directory here. Leave it blank if there isn't one. -> your_folder
-  SUSFS_PATCH_FIXED: "susfs_414_fix,0001-add-snowflake-schedutil-governor-pissarro-v2,0002-hydrogen-performance-pack-after-pissarrox" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
+  SUSFS_PATCH_FIXED: "susfs_414_fix,0001-add-snowflake-schedutil-governor-pissarro-v2,0002-hydrogen-performance-pack-after-pissarrox,0003-fix-sukisu-ultra-kpm-access-ok-4.14,0004-fix-sukisu-ultra-static-key-link-v2-4.14" # Fill in your patches here. If there are multiple patches, please separate them with a comma. Leave it blank if there isn't one. -> patch1,patch2
 
   REKERNEL_ENABLE: "false" # if u need Re:Kernel.
 
