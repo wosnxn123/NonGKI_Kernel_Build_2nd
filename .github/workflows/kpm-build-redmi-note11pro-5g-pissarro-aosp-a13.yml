@@ -12,8 +12,8 @@ env:
   CUSTOM_CMDS : "CLANG_TRIPLE=aarch64-linux-gnu-"
   EXTRA_CMDS : "LD=ld.lld LLVM=1 LLVM_IAS=1"
 
-  KERNEL_SOURCE : "https://github.com/wosnxn123/android_kernel_xiaomi_pissarro-hydrogen.git"
-  KERNEL_BRANCH : "hydrogenx-v12-schedutil"
+  KERNEL_SOURCE : "https://github.com/wosnxn123/kernel_xiaomi_pissarro.git"
+  KERNEL_BRANCH : "T"
 
   CLANG_SOURCE : "https://github.com/llvm/llvm-project/releases/download/llvmorg-19.1.7/LLVM-19.1.7-Linux-X64.tar.xz"
   CLANG_BRANCH : ""
@@ -133,10 +133,8 @@ jobs:
       - name: 🚀 Build Process
         uses: ./.github/workflows/build-process
 
-      - name: 📦 Upload Raw Kernel Files
-        uses: actions/upload-artifact@v4
-        with:
-          name: Raw-Kernel-${{ env.DEVICE_NAME }}
-          path: |
-            device_kernel/out/arch/arm64/boot/Image
-            device_kernel/out/arch/arm64/boot/Image.gz
+      - name: 🔩 Pack Process
+        uses: ./.github/workflows/pack-process
+
+      - name: ✏️ Upload Artifacts
+        uses: ./.github/workflows/upload-files
