@@ -12,7 +12,7 @@ index 3cfd698..5b4103c 100644
  obj-y +=	buffer.o block_dev.o direct-io.o mpage.o
  else
 diff --git a/fs/namei.c b/fs/namei.c
-index e8537d4..f86391b 100644
+index e8537d4..c898430 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -38,6 +38,9 @@
@@ -231,33 +231,25 @@ index e8537d4..f86391b 100644
  		path.dentry = lookup_slow(&nd->last, nd->path.dentry,
  					  nd->flags);
  		if (IS_ERR(path.dentry))
-@@ -2176,6 +2278,9 @@ static inline u64 hash_name(const void *salt, const char *name)
- static int link_path_walk(const char *name, struct nameidata *nd)
- {
- 	int err;
-+#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+	struct dentry *dentry;
-+#endif
- 
- 	while (*name=='/')
- 		name++;
-@@ -2191,6 +2296,15 @@ static int link_path_walk(const char *name, struct nameidata *nd)
+@@ -2191,6 +2293,17 @@ static int link_path_walk(const char *name, struct nameidata *nd)
  		if (err)
  			return err;
  
 +#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-+		dentry = nd->path.dentry;
-+		if (dentry->d_inode && susfs_is_inode_sus_path(dentry->d_inode)) {
-+			// - No need to dput() here
-+			// - return -ENOENT here since it is walking the sub path of sus path
-+			return -ENOENT;
++		{
++			struct dentry *dentry = nd->path.dentry;
++			if (dentry->d_inode && susfs_is_inode_sus_path(dentry->d_inode)) {
++				// - No need to dput() here
++				// - return -ENOENT here since it is walking the sub path of sus path
++				return -ENOENT;
++			}
 +		}
 +#endif
 +
  		hash_len = hash_name(nd->path.dentry, name);
  
  		type = LAST_NORM;
-@@ -2387,6 +2501,9 @@ static inline int lookup_last(struct nameidata *nd)
+@@ -2387,6 +2500,9 @@ static inline int lookup_last(struct nameidata *nd)
  {
  	if (nd->last_type == LAST_NORM && nd->last.name[nd->last.len])
  		nd->flags |= LOOKUP_FOLLOW | LOOKUP_DIRECTORY;
@@ -267,7 +259,7 @@ index e8537d4..f86391b 100644
  
  	nd->flags &= ~LOOKUP_PARENT;
  	return walk_component(nd,
-@@ -3254,15 +3371,39 @@ static int lookup_open(struct nameidata *nd, struct path *path,
+@@ -3254,15 +3370,39 @@ static int lookup_open(struct nameidata *nd, struct path *path,
  	int error, create_error = 0;
  	umode_t mode = op->mode;
  	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
@@ -307,7 +299,7 @@ index e8537d4..f86391b 100644
  			if (IS_ERR(dentry))
  				return PTR_ERR(dentry);
  		}
-@@ -3391,6 +3532,10 @@ static int do_last(struct nameidata *nd,
+@@ -3391,6 +3531,10 @@ static int do_last(struct nameidata *nd,
  	struct path path;
  	int error;
  
@@ -318,7 +310,7 @@ index e8537d4..f86391b 100644
  	nd->flags &= ~LOOKUP_PARENT;
  	nd->flags |= op->intent;
  
-@@ -4872,6 +5017,10 @@ out:
+@@ -4872,6 +5016,10 @@ out:
  	return len;
  }
  
@@ -329,7 +321,7 @@ index e8537d4..f86391b 100644
  /*
   * A helper for ->readlink().  This should be used *ONLY* for symlinks that
   * have ->get_link() not calling nd_jump_link().  Using (or not using) it
-@@ -4891,6 +5040,15 @@ int generic_readlink(struct dentry *dentry, char __user *buffer, int buflen)
+@@ -4891,6 +5039,15 @@ int generic_readlink(struct dentry *dentry, char __user *buffer, int buflen)
  		if (IS_ERR(link))
  			return PTR_ERR(link);
  	}
@@ -3383,7 +3375,7 @@ index 0000000..45c0f53
 +#endif
 diff --git a/include/linux/susfs_def.h b/include/linux/susfs_def.h
 new file mode 100644
-index 0000000..698b1ab
+index 0000000..e91c5db
 --- /dev/null
 +++ b/include/linux/susfs_def.h
 @@ -0,0 +1,171 @@
@@ -3436,8 +3428,8 @@ index 0000000..698b1ab
 +#define TRY_UMOUNT_DETACH 1 /* used by susfs_try_umount() */
 +
 +#define VFSMOUNT_MNT_FLAGS_KSU_UNSHARED_MNT 0x80000000 /* used for mounts that are unshared by ksu process */
-+#define DEFAULT_KSU_MNT_ID 500000 /* used for mounts created or single cloned by ksu process */
-+#define DEFAULT_KSU_MNT_GROUP_ID 5000 /* used by mount->mnt_group_id */
++#define DEFAULT_KSU_MNT_ID 2000000000 /* used for mounts created or single cloned by ksu process */
++#define DEFAULT_KSU_MNT_GROUP_ID 200000 /* used by mount->mnt_group_id */
 +
 +#ifndef FUSE_SUPER_MAGIC
 +#define FUSE_SUPER_MAGIC 0x65735546
