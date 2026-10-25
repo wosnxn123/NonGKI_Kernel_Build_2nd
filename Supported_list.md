@@ -20,7 +20,7 @@
 | Xiaomi Redmi K30 Ultra | All | cezanne | [4.14/HuaLiMao-AQ/AOSP](https://github.com/HuaLiMao-AQ/android_kernel_xiaomi_mt6873) | AOSP Based | 14 | AnyKernel3 | BakaSU | ✅ | Inline | ❌ | ✅ | ✅ | ❌ | Stable |  
 | Xiaomi Redmi Note 7 | CN | lavender | [4.19/pix106/southwest](https://github.com/pix106/android_kernel_xiaomi_southwest-4.19) | AOSP Based | 15 | AnyKernel3 | BakaSU | ✅ | Inline | ❌ | ❌ | ❌ | ❌ | Stable |  
 | Xiaomi Redmi Note 11 Pro 5G | INT | veux | [5.4/dereference23/eplus](https://github.com/dereference23/kernel_xiaomi_sm6375) | AOSP Based | 16 | AnyKernel3 | BakaSU | ✅ | Inline | ❌ | ❌ | ❌ | ❌ | Stable |  
-| Xiaomi Redmi Note 11 Pro/Pro+ (Hydrogen) | See notes | pissarro | [4.14.357/wosnxn123/Hydrogen](https://github.com/wosnxn123/android_kernel_xiaomi_pissarro-hydrogen/tree/lineage-23.2) | LineageOS 23.2 | 16 | AnyKernel3 | SukiSU Ultra | Yes | Inline | SukiSU built-in | No | No | No | Boot untested |
+| Xiaomi Redmi Note 11 Pro/Pro+ (Hydrogen) | See notes | pissarro | [4.14.357/wosnxn123/Hydrogen](https://github.com/wosnxn123/android_kernel_xiaomi_pissarro-hydrogen/tree/lineage-23.2) | LineageOS 23.2 | 16 | AnyKernel3 | SukiSU Ultra | Yes | Inline | SukiSU built-in | No | No | No | Build passed; boot untested |
 
 **English**:  
 - The Google Pixel 3a AnyKernel3 build is intended to support both the Pixel 3a and Pixel 3a XL.
@@ -32,6 +32,7 @@
 - Hydrogen uses SukiSU Ultra pinned to [f8283f3](https://github.com/SukiSU-Ultra/SukiSU-Ultra/commit/f8283f3db047c31fa0111d969e3e259011199b05) from its `builtin` history; later upstream refactors do not match the Non-GKI compatibility patch. Native KPM uses `CONFIG_KPM=y`, `KPM_INLINE=true`, and SukiSU's official `patch_linux` image patcher. Manage `.kpm` modules with the matching SukiSU Ultra manager; KPatch-Next is disabled and its companion module is not required. The build enables `DEBUG_KERNEL`, `KALLSYMS`, and `KALLSYMS_ALL` while preserving the kernel's CFI/ThinLTO.
 - The bundled SukiSU compatibility patch routes native KPM user-pointer checks through `ksu_access_ok`, supporting Hydrogen's three-argument Linux 4.14 `access_ok` API without changing the kernel's global uaccess interface. KPM detects the backported `task_struct.thread_pid` member from the kernel headers rather than assuming the layout from the version number.
 - The Hydrogen workflow builds on relevant pushes to `mainline` as well as manual runs. Failed job logs are saved on the `hydrogen-build-logs` branch for remote diagnosis; compilation runs only on GitHub-hosted runners.
+- Cloud verification: [run #3](https://github.com/wosnxn123/NonGKI_Kernel_Build_2nd/actions/runs/40171889536) passed at build commit `34416e63d34224c4e3c0999f304927c49cc1d7e8` on 2026-10-25, including kernel compilation, native KPM image patching, AnyKernel3 packaging, and artifact upload. The package is `pissarro-hydrogen_lineageos23.2_a16-20261025073034-AnyKernel3.zip`; device boot and runtime SukiSU/SUSFS/KPM behavior remain untested.
 
 **Chinese**:  
 - Google Pixel 3a AnyKernel3 编译目标同时支持 Pixel 3a 和 Pixel 3a XL。
@@ -43,3 +44,4 @@
 - Hydrogen 使用 SukiSU Ultra，固定到 `builtin` 历史中的 [f8283f3](https://github.com/SukiSU-Ultra/SukiSU-Ultra/commit/f8283f3db047c31fa0111d969e3e259011199b05)，避免上游后续重构与 Non-GKI 兼容补丁冲突。原生 KPM 使用 `CONFIG_KPM=y`、`KPM_INLINE=true` 和 SukiSU 官方 `patch_linux` 镜像修补工具，通过对应版本的 SukiSU Ultra 管理器管理 `.kpm` 模块；已关闭 KPatch-Next，无需安装其配套模块。构建会开启 `DEBUG_KERNEL`、`KALLSYMS`、`KALLSYMS_ALL`，保留内核原有的 CFI/ThinLTO。
 - 随附的 SukiSU 兼容补丁使用 `ksu_access_ok` 处理原生 KPM 的用户指针检查，适配 Hydrogen Linux 4.14 的三参数 `access_ok`，不修改内核全局 uaccess 接口。KPM 根据内核头文件识别已回移植的 `task_struct.thread_pid`，不再仅凭版本号判断结构布局。
 - Hydrogen 工作流支持在 `mainline` 推送相关修改后自动构建，也可手动运行；失败日志保存在 `hydrogen-build-logs` 分支，便于远程排错，编译仅在 GitHub 托管运行器执行。
+- 云端验证：[第 3 轮构建](https://github.com/wosnxn123/NonGKI_Kernel_Build_2nd/actions/runs/40171889536)于 2026-10-25 成功，构建提交为 `34416e63d34224c4e3c0999f304927c49cc1d7e8`，已通过内核编译、原生 KPM 镜像修补、AnyKernel3 打包和产物上传。刷机包为 `pissarro-hydrogen_lineageos23.2_a16-20261025073034-AnyKernel3.zip`；尚未验证实机启动及 SukiSU/SUSFS/KPM 运行时行为。

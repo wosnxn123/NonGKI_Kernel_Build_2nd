@@ -71,7 +71,7 @@ jobs:
 
         - Specific device information: [Supported List](Supported_list.md).
         - The KernelSU version is for reference only. It is normal for the KernelSU version embedded in SUSFS to be lower.
-        - Hydrogen (`pissarro`) uses SukiSU Ultra pinned to `f8283f3` with native KPM and SUSFS. Use the matching SukiSU Ultra manager; no KPatch-Next companion module is needed. Device boot is untested; do not flash it on `veux`.
+        - Hydrogen (`pissarro`) uses SukiSU Ultra pinned to `f8283f3` with native KPM and SUSFS. Use the matching SukiSU Ultra manager; no KPatch-Next companion module is needed. [Cloud build #3](https://github.com/wosnxn123/NonGKI_Kernel_Build_2nd/actions/runs/40171889536) passed compilation, KPM image patching, packaging, and artifact upload. Device boot and runtime behavior are untested; do not flash it on `veux`.
 
     steps:
       # Checkout the code
