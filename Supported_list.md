@@ -30,6 +30,7 @@
 - Xiaomi Redmi 8 is also available for 7A, 8A and 8A Dual.
 - Hydrogen: run [Build Xiaomi Redmi Note 11 Pro/Pro+ (Hydrogen, LineageOS 23.2)](.github/workflows/build-redmi-note11pro-hydrogen-a16.yml) from Actions. It uses `lineage-23.2`, `pissarro_defconfig`, Clang `r563880c`, and `KERNEL_BUILD_TARGET: Image.gz`; the device-specific AnyKernel3 packages the kernel's `prebuilts/dtb.img` and `prebuilts/dtbo.img`. Its device check accepts `pissarro`, `pissarropro`, `pissarropro_ss`, `pissarropro_ds`, `pissarroin`, and `pissarroinpro`. Device boot is untested; this is not the Snapdragon `veux` build.
 - Hydrogen uses SukiSU Ultra pinned to [f8283f3](https://github.com/SukiSU-Ultra/SukiSU-Ultra/commit/f8283f3db047c31fa0111d969e3e259011199b05) from its `builtin` history; later upstream refactors do not match the Non-GKI compatibility patch. Native KPM uses `CONFIG_KPM=y`, `KPM_INLINE=true`, and SukiSU's official `patch_linux` image patcher. Manage `.kpm` modules with the matching SukiSU Ultra manager; KPatch-Next is disabled and its companion module is not required. The build enables `DEBUG_KERNEL`, `KALLSYMS`, and `KALLSYMS_ALL` while preserving the kernel's CFI/ThinLTO.
+- The bundled SukiSU compatibility patch routes native KPM user-pointer checks through `ksu_access_ok`, supporting Hydrogen's three-argument Linux 4.14 `access_ok` API without changing the kernel's global uaccess interface.
 - The Hydrogen workflow builds on relevant pushes to `mainline` as well as manual runs. Failed job logs are saved on the `hydrogen-build-logs` branch for remote diagnosis; compilation runs only on GitHub-hosted runners.
 
 **Chinese**:  
@@ -40,4 +41,5 @@
 - 红米 8 同样适用于 7A、8A 以及 8A Dual
 - Hydrogen：在 Actions 中运行 [Build Xiaomi Redmi Note 11 Pro/Pro+ (Hydrogen, LineageOS 23.2)](.github/workflows/build-redmi-note11pro-hydrogen-a16.yml)。配置使用 `lineage-23.2`、`pissarro_defconfig`、Clang `r563880c` 和 `KERNEL_BUILD_TARGET: Image.gz`，专用 AnyKernel3 会打包内核自带的 `prebuilts/dtb.img`、`prebuilts/dtbo.img`。安装器允许的设备代号为 `pissarro`、`pissarropro`、`pissarropro_ss`、`pissarropro_ds`、`pissarroin`、`pissarroinpro`；尚未实机验证，不能用于高通 `veux` 机型。
 - Hydrogen 使用 SukiSU Ultra，固定到 `builtin` 历史中的 [f8283f3](https://github.com/SukiSU-Ultra/SukiSU-Ultra/commit/f8283f3db047c31fa0111d969e3e259011199b05)，避免上游后续重构与 Non-GKI 兼容补丁冲突。原生 KPM 使用 `CONFIG_KPM=y`、`KPM_INLINE=true` 和 SukiSU 官方 `patch_linux` 镜像修补工具，通过对应版本的 SukiSU Ultra 管理器管理 `.kpm` 模块；已关闭 KPatch-Next，无需安装其配套模块。构建会开启 `DEBUG_KERNEL`、`KALLSYMS`、`KALLSYMS_ALL`，保留内核原有的 CFI/ThinLTO。
+- 随附的 SukiSU 兼容补丁使用 `ksu_access_ok` 处理原生 KPM 的用户指针检查，适配 Hydrogen Linux 4.14 的三参数 `access_ok`，不修改内核全局 uaccess 接口。
 - Hydrogen 工作流支持在 `mainline` 推送相关修改后自动构建，也可手动运行；失败日志保存在 `hydrogen-build-logs` 分支，便于远程排错，编译仅在 GitHub 托管运行器执行。
