@@ -1,0 +1,208 @@
+name: Build Xiaomi Redmi Note 11 Pro/Pro+ (Hydrogen, LineageOS 23.2)
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [mainline]
+    paths:
+      - '.github/workflows/build-redmi-note11pro-hydrogen-a16.yml'
+      - '.github/workflows/*/action.yml'
+      - 'Patches/**'
+      - 'Bin/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hydrogen-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Hydrogen's pissarro family; not the Snapdragon-based veux device.
+  DEVICE_NAME: "redmi_note11pro_hydrogen"
+  DEVICE_CODENAME: "pissarro"
+
+  KERNEL_SOURCE: "https://github.com/wosnxn123/android_kernel_xiaomi_pissarro-hydrogen.git"
+  KERNEL_BRANCH: "lineage-23.2"
+  DEFCONFIG_NAME: "pissarro_defconfig"
+  DEFCONFIG_SOURCE: ""
+  DEFCONFIG_ORIGIN_IMAGE: ""
+  DEFCONFIG_FROM_BOOT: "false"
+
+  # Match Hydrogen's build.sh, including its Image.gz-only build target.
+  CLANG_SOURCE: "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/tags/android-16.0.0_r4/clang-r563880c.tar.gz"
+  CLANG_BRANCH: ""
+  GCC_GNU: "false"
+  GCC_64_SOURCE: ""
+  GCC_64_BRANCH: ""
+  GCC_32_SOURCE: ""
+  GCC_32_BRANCH: ""
+  CUSTOM_CMDS: "SUBARCH=arm64 LLVM=1 LLVM_IAS=1"
+  EXTRA_CMDS: "CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi-"
+  KERNEL_BUILD_TARGET: "Image.gz"
+
+  # Pin the SUSFS builtin revision before upstream's compatibility-breaking refactor.
+  KERNELSU_AUTO_GET: "false"
+  KERNELSU_AUTO_FORK: "sukisu"
+  KERNELSU_METHOD: "shell"
+  KERNELSU_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/f8283f3db047c31fa0111d969e3e259011199b05/kernel/setup.sh"
+  KERNELSU_BRANCH: "f8283f3db047c31fa0111d969e3e259011199b05"
+
+  SUSFS_ENABLE: "true"
+  # Use the device fix bundled in this repository, not a remote patch repository.
+  SUSFS_FIXED: "false"
+  PATCHES_SOURCE: ""
+  PATCHES_BRANCH: ""
+  SUSFS_FOLDER_FIXED: "pissarro_hydrogen"
+  SUSFS_PATCH_FIXED: "pissarro_hydrogen_susfs_fixed"
+  HOOK_METHOD: "syscall"
+
+  KPM_ENABLE: "true"
+  KPM_INLINE: "true"
+  KPM_KPATCH_NEXT: "false"
+  KPM_PATCH_SOURCE: "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU_patch/refs/heads/main/kpm/patch_linux"
+
+  AK3_SOURCE: "https://github.com/pissarro-development/anykernel3.git"
+  AK3_BRANCH: "hydrogen-4.14.y"
+  PACK_METHOD: "AnyKernel3"
+  PACK_KMODULES: "false"
+  BOOT_SOURCE: ""
+  # Upstream ships device-tree images in prebuilts/; do not regenerate them.
+  NEED_DTBO: "false"
+  NEED_SAFE_DTBO: "false"
+  GENERATE_DTB: "false"
+  GENERATE_CHIP: "mediatek"
+  ROM_TEXT: "hydrogen_lineageos23.2_a16"
+
+  PYTHON_VERSION: "3"
+  REKERNEL_ENABLE: "false"
+  DROIDSPACES_ENABLE: "false"
+  NOMOUNT_ENABLE: "false"
+  BASEBAND_GUARD_ENABLE: "false"
+  BASEBAND_GUARD_BOOT: "false"
+  BUILD_OTHER_CONFIG: "false"
+  MERGE_CONFIG_FILES: ""
+  BUILD_DEBUGGER: "true"
+  SKIP_PATCH: "false"
+  FREE_MORE_SPACE: "false"
+
+jobs:
+  build-kernel:
+    name: pissarro Hydrogen / SukiSU Ultra / SUSFS / KPM
+    runs-on: ubuntu-24.04
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_HARDLINK: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Prepare compilation environment
+        uses: ./.github/workflows/build-env
+
+      - name: Get kernel and build tools
+        uses: ./.github/workflows/build-ready
+
+      - name: Stage Hydrogen SUSFS fix
+        run: |
+          install -Dm644 "/tmp/Patches/Patch/$SUSFS_PATCH_FIXED.patch" \
+            "$GITHUB_WORKSPACE/device_kernel/NonGKI_Kernel_Patches/$SUSFS_FOLDER_FIXED/$SUSFS_PATCH_FIXED.patch"
+
+      - name: Patch SUSFS
+        uses: ./.github/workflows/patch-susfs
+
+      - name: Verify Hydrogen SUSFS fix
+        working-directory: device_kernel
+        run: |
+          patch --batch --dry-run --reverse -p1 < "/tmp/Patches/Patch/$SUSFS_PATCH_FIXED.patch"
+          mapfile -t rejects < <(find . -type f -name '*.rej')
+          if (( ${#rejects[@]} )); then
+            printf '::error::Unapplied SUSFS patch: %s\n' "${rejects[@]}"
+            exit 1
+          fi
+
+      - name: Install SUSFS inline hooks
+        uses: ./.github/workflows/patch-no-kprobe
+
+      - name: Enable Hydrogen integration options
+        working-directory: device_kernel
+        run: |
+          ./scripts/config --file "arch/$KERNEL_ARCH/configs/$DEFCONFIG_NAME" \
+            --enable DEBUG_KERNEL \
+            --enable KALLSYMS \
+            --enable KALLSYMS_ALL \
+            --enable KPM \
+            --enable TMPFS_XATTR
+
+      - name: Set swap
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
+
+      - name: Build kernel
+        uses: ./.github/workflows/build-process
+
+      - name: Stage Hydrogen device trees
+        working-directory: device_kernel
+        run: |
+          test -s "out/arch/$KERNEL_ARCH/boot/Image.gz"
+          cp prebuilts/dtb.img prebuilts/dtbo.img AnyKernel3/
+
+      - name: Pack kernel
+        uses: ./.github/workflows/pack-process
+
+      - name: Upload artifacts
+        uses: ./.github/workflows/upload-files
+
+  build-diagnostics:
+    name: Publish failed Hydrogen build log
+    needs: build-kernel
+    if: failure()
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Save failed job log for remote diagnosis
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const branch = 'hydrogen-build-logs';
+            const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+              owner, repo, run_id: context.runId, filter: 'latest', per_page: 100
+            });
+            const failed = jobs.filter(job => job.conclusion === 'failure' &&
+              job.name.includes('pissarro Hydrogen / SukiSU Ultra / SUSFS / KPM'));
+            if (!failed.length) {
+              core.setFailed('No failed Hydrogen job found for diagnosis.');
+              return;
+            }
+            let log = `Run: ${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}\n`;
+            for (const job of failed) {
+              const response = await github.rest.actions.downloadJobLogsForWorkflowRun({
+                owner, repo, job_id: job.id
+              });
+              const download = await fetch(response.url);
+              if (!download.ok) throw new Error(`Job log download: HTTP ${download.status}`);
+              const text = await download.text();
+              log += `\nJob: ${job.name}\n${text.slice(-6000000)}\n`;
+            }
+            try {
+              await github.rest.git.getRef({owner, repo, ref: `heads/${branch}`});
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.git.createRef({
+                owner, repo, ref: `refs/heads/${branch}`, sha: context.sha
+              });
+            }
+            const path = `runs/${context.runId}-${process.env.GITHUB_RUN_ATTEMPT}.log`;
+            await github.rest.repos.createOrUpdateFileContents({
+              owner, repo, branch, path,
+              message: `Record Hydrogen build ${context.runId} failure`,
+              content: Buffer.from(log).toString('base64')
+            });
+            core.notice(`Diagnostic log: ${context.serverUrl}/${owner}/${repo}/blob/${branch}/${path}`);

@@ -1,4 +1,5 @@
 name: 'Patch Kernel for no-kprobe.'
+description: 'Integrate KernelSU syscall or SUSFS inline hooks without kprobes.'
 
 runs:
   using: 'composite'
@@ -8,13 +9,13 @@ runs:
         run: |
           cd $GITHUB_WORKSPACE/device_kernel
 
-          # Detect SuSFS is used to enable the SuSFS inline hook
+          # Detect SUSFS is used to enable the SUSFS inline hook
           if [[ ${{ env.SUSFS_ENABLE }} == "true" ]]; then
             # Core
             cp /tmp/Patches/susfs_inline_hook_patches.sh ./
             bash susfs_inline_hook_patches.sh ./
 
-            echo "[+] executed SuSFS inline hook successfully."
+            echo "[+] executed SUSFS inline hook successfully."
 
           # Check syscall hook
           elif [[ ${{ env.HOOK_METHOD }} == "syscall" ]]; then
@@ -54,7 +55,11 @@ runs:
             fi
             sed -i 's/^static const struct file_operations sel_handle_status_ops = {/const struct file_operations sel_handle_status_ops = {/' security/selinux/selinuxfs.c
 
-            echo "[+] Removed write_op and sel_handle_status_ops static state."
+            sed -i 's/static void security_dump_masked_av(struct policydb \*policydb,/void security_dump_masked_av(struct policydb *policydb,/' security/selinux/ss/services.c
+
+            sed -i 's/static void context_struct_compute_av(struct policydb \*policydb,/void context_struct_compute_av(struct policydb *policydb,/' security/selinux/ss/services.c
+
+            echo "[+] Removed write_op, sel_handle_status_ops, security_dump_masked_av and context_struct_compute_av static state."
 
             if [ "$FIRST_VERSION" -lt 5 ] && [ "$SECOND_VERSION" -lt 15 ]; then
                 if grep -q "sel_mutex" "security/selinux/selinuxfs.c" >/dev/null 2>&1; then
