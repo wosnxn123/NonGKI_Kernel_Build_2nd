@@ -219,3 +219,40 @@ diff --git a/kpm/kpm.c b/kpm/kpm.c
          pr_err("kpm: invalid result_code pointer %px\n",
                 (void *)cmd.result_code);
          return -EFAULT;
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -113,6 +113,10 @@
+ ccflags-y += -DKSU_COMPAT_HAS_BACKPORTED_CPUS_PTR
+ endif
+ 
++ifeq ($(shell grep -q "thread_pid;" $(srctree)/include/linux/sched.h; echo $$?),0)
++ccflags-y += -DKSU_COMPAT_HAS_THREAD_PID
++endif
++
+ ifeq ($(shell grep -q "selinux_inode" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
+ ccflags-y += -DKSU_HAS_SELINUX_INODE
+ endif
+diff --git a/kpm/super_access.c b/kpm/super_access.c
+--- a/kpm/super_access.c
++++ b/kpm/super_access.c
+@@ -147,7 +147,7 @@
+ DEFINE_MEMBER(task_struct, group_leader)
+ DEFINE_MEMBER(task_struct, mm)
+ DEFINE_MEMBER(task_struct, active_mm)
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 19, 0) && !defined(KSU_COMPAT_HAS_THREAD_PID)
+ DEFINE_MEMBER(task_struct, pids[PIDTYPE_PID].pid)
+ #else
+ DEFINE_MEMBER(task_struct, thread_pid)
+diff --git a/policy/feature.c b/policy/feature.c
+--- a/policy/feature.c
++++ b/policy/feature.c
+@@ -7,7 +7,6 @@
+     [KSU_FEATURE_KERNEL_UMOUNT] = "kernel_umount",
+     [KSU_FEATURE_SULOG] = "sulog",
+     [KSU_FEATURE_ADB_ROOT] = "adb_root",
+-    [KSU_FEATURE_SELINUX_HIDE] = "selinux_hide",
+     [KSU_FEATURE_SHELL_SU_ADB_ONLY] = "shell_su_adb_only",
+ };
+ 
